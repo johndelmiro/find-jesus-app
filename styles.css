@@ -391,11 +391,12 @@ body {
 
 /* Rodapé */
 .footer {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px 0;
-    margin-top: 40px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 20px 0;
+    margin-top: 60px;
     width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .footer-content {
@@ -408,16 +409,18 @@ body {
 }
 
 .footer-text {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 .instagram-btn {
-    color: white;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    padding: 8px;
+    padding: 6px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -425,8 +428,15 @@ body {
 }
 
 .instagram-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+    color: rgba(255, 255, 255, 1);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+.instagram-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* --- Responsividade --- */
