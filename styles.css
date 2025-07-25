@@ -389,14 +389,12 @@ body {
     background: #555;
 }
 
-/* --- Rodapé --- */
+/* Rodapé */
 .footer {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 15px 0;
     margin-top: 40px;
-    position: relative;
-    bottom: 0;
     width: 100%;
 }
 

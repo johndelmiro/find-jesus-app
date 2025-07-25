@@ -369,11 +369,11 @@ function downloadImage() {
         ctx.font = 'bold 36px Arial';
         ctx.fillText(window.currentVerse.reference, canvas.width / 2, startY + (lines.length * lineHeight) + 80);
         
-        // Adicionar marca d'água (mais discreto e em baixo)
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        // Adicionar texto de crédito
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Find Jesus - by John Delmiro APP', canvas.width / 2, canvas.height - 40);
+        ctx.fillText('Find Jesus - by John Delmiro APP', canvas.width / 2, canvas.height - 80);
         
         // Baixar imagem
         canvas.toBlob(function(blob) {
