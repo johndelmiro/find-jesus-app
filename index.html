@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Jesus - A Palavra de Deus para qualquer momento</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Tela Inicial -->
+    <div id="home-screen" class="screen active">
+        <div class="background-image" style="background-image: url('https://i.postimg.cc/5tyNzPPq/08ee9506-a270-4a27-8bda-80bd681dcbfd.png');"></div>
+        <div class="overlay"></div>
+        <div class="content">
+            <h1 class="app-title">Find Jesus</h1>
+            <p class="subtitle">A Palavra de Deus para qualquer momento.</p>
+            <button class="btn btn-primary start-btn" onclick="showMenu()">Iniciar</button>
+        </div>
+    </div>
+
+    <!-- Tela do Menu Principal -->
+    <div id="menu-screen" class="screen">
+        <div class="background-image" style="background-image: url('https://i.postimg.cc/HstphGR9/3e6b1cd2-aa3a-4aa3-9590-51595e6cdf8d.png');"></div>
+        <div class="overlay"></div>
+        <button class="btn btn-secondary back-btn" onclick="showHome()">← Voltar</button>
+        <div class="menu-content">
+            <h2>Menu Principal</h2>
+            <div class="menu-options">
+                <button class="btn btn-secondary menu-btn" onclick="showBible('complete')">Bíblia Completa</button>
+                <button class="btn btn-secondary menu-btn" onclick="showBible('old')">Antigo Testamento</button>
+                <button class="btn btn-secondary menu-btn" onclick="showBible('new')">Novo Testamento</button>
+                <button class="btn btn-primary menu-btn special" onclick="showFindJesus()">Find Jesus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela da Bíblia -->
+    <div id="bible-screen" class="screen">
+        <button class="btn btn-secondary back-btn" onclick="showMenu()">← Voltar</button>
+        <div class="bible-container">
+            <div class="bible-header">
+                <h2 id="bible-title">Bíblia</h2>
+                <div class="search-container">
+                    <input type="text" id="bible-search" placeholder="Buscar por palavra, frase, livro...">
+                    <button class="btn btn-primary" onclick="searchBible()">Buscar</button>
+                </div>
+            </div>
+            <div id="bible-content-wrapper" class="bible-content-wrapper">
+                <div id="bible-books" class="books-grid"></div>
+                <div id="bible-chapters" class="chapters-grid"></div>
+                <div id="bible-text" class="bible-text-content"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Tela Find Jesus -->
+    <div id="find-jesus-screen" class="screen">
+        <div class="background-image" style="background-image: url('https://i.postimg.cc/HstphGR9/3e6b1cd2-aa3a-4aa3-9590-51595e6cdf8d.png');"></div>
+        <div class="overlay"></div>
+        <button class="btn btn-secondary back-btn" onclick="showMenu()">← Voltar</button>
+        <div class="find-jesus-content">
+            <h2>Find Jesus</h2>
+            <p>Compartilhe o que está em seu coração e encontre a palavra de Deus para este momento.</p>
+            <textarea id="user-situation" placeholder="Conte-nos o que você está vivenciando, suas dúvidas, medos, alegrias..." maxlength="2000"></textarea>
+            <div class="char-counter">
+                <span id="char-count">0</span>/2000
+            </div>
+            <button class="btn btn-primary find-btn" onclick="findVerse()">Encontrar Palavra</button>
+            <div id="loading-indicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p>Buscando a palavra de Deus para você...</p>
+            </div>
+            <div id="verse-result" class="verse-result hidden">
+                <p class="verse-text"></p>
+                <strong class="verse-reference"></strong>
+                <div class="share-buttons">
+                    <button class="btn btn-secondary" onclick="copyVerse()">Copiar</button>
+                    <button class="btn btn-secondary" onclick="downloadImage()">Baixar Imagem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas para geração de imagem -->
+    <canvas id="image-canvas" style="display: none;"></canvas>
+
+    <script src="bible-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
