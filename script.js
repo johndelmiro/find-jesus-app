@@ -132,7 +132,7 @@ function loadChapter(chapterNumber) {
 
 // Busca na Bíblia
 function searchBible() {
-    const searchTerm = document.getElementById('bible-search').value.toLowerCase().trim();
+    const searchTerm = document.getElementById('bible-search').value.trim();
     if (!searchTerm) return;
 
     const booksContainer = document.getElementById('bible-books');
@@ -155,42 +155,78 @@ function searchBible() {
         booksToSearch = newTestamentBooks;
     }
 
-    // Verificar se é uma busca por referência específica (ex: "Salmo 41", "Mateus 12:3")
-    const referenceResult = searchByReference(searchTerm, booksToSearch);
-    if (referenceResult) {
-        textContainer.innerHTML = referenceResult;
-        textContainer.style.display = 'block';
-        textContainer.scrollIntoView({ behavior: 'smooth' });
-        return;
-    }
-
-    booksToSearch.forEach(book => {
-        book.chapters.forEach((chapter, chapterIndex) => {
-            chapter.forEach((verse, verseIndex) => {
-                if (verse.toLowerCase().includes(searchTerm)) {
+    // Verificar se é uma busca por referência bíblica (ex: "Salmo 41", "Mateus 12:3", "João 3")
+    const referenceMatch = searchTerm.match(/^([\w\sÀ-ÿ]+?)\s+(\d+)(?::(\d+))?$/i);
+    
+    if (referenceMatch) {
+        // É uma busca por referência
+        const bookName = referenceMatch[1].trim();
+        const chapterNum = parseInt(referenceMatch[2]);
+        const verseNum = referenceMatch[3] ? parseInt(referenceMatch[3]) : null;
+        
+        // Encontrar o livro correspondente
+        const foundBook = booksToSearch.find(book => 
+            book.name.toLowerCase().includes(bookName.toLowerCase()) ||
+            bookName.toLowerCase().includes(book.name.toLowerCase())
+        );
+        
+        if (foundBook && foundBook.chapters[chapterNum - 1]) {
+            if (verseNum && foundBook.chapters[chapterNum - 1][verseNum - 1]) {
+                // Busca por versículo específico
+                results.push({
+                    book: foundBook.name,
+                    chapter: chapterNum,
+                    verse: verseNum,
+                    text: foundBook.chapters[chapterNum - 1][verseNum - 1]
+                });
+            } else if (!verseNum) {
+                // Busca por capítulo inteiro
+                foundBook.chapters[chapterNum - 1].forEach((verse, verseIndex) => {
                     results.push({
-                        book: book.name,
-                        chapter: chapterIndex + 1,
+                        book: foundBook.name,
+                        chapter: chapterNum,
                         verse: verseIndex + 1,
                         text: verse
                     });
-                }
+                });
+            }
+        }
+    } else {
+        // Busca tradicional por palavras/frases
+        const searchTermLower = searchTerm.toLowerCase();
+        booksToSearch.forEach(book => {
+            book.chapters.forEach((chapter, chapterIndex) => {
+                chapter.forEach((verse, verseIndex) => {
+                    if (verse.toLowerCase().includes(searchTermLower)) {
+                        results.push({
+                            book: book.name,
+                            chapter: chapterIndex + 1,
+                            verse: verseIndex + 1,
+                            text: verse
+                        });
+                    }
+                });
             });
         });
-    });
+    }
 
     if (results.length === 0) {
         textContainer.innerHTML = '<p>Nenhum resultado encontrado.</p>';
     } else {
+        const isReference = referenceMatch !== null;
+        const titleText = isReference ? 
+            `Referência: "${searchTerm}"` : 
+            `Resultados da busca: "${searchTerm}" (${results.length} encontrados)`;
+            
         textContainer.innerHTML = `
-            <h3>Resultados da busca: "${searchTerm}" (${results.length} encontrados)</h3>
+            <h3>${titleText}</h3>
             <div class="search-results">
                 ${results.slice(0, 100).map(result => 
                     `<div class="verse" onclick="goToChapter('${result.book}', ${result.chapter})">
                         <div class="verse-reference" style="font-weight: bold; margin-bottom: 5px; cursor: pointer;">
                             ${result.book} ${result.chapter}:${result.verse}
                         </div>
-                        <div>${highlightSearchTerm(result.text, searchTerm)}</div>
+                        <div>${isReference ? result.text : highlightSearchTerm(result.text, searchTerm)}</div>
                     </div>`
                 ).join('')}
                 ${results.length > 100 ? '<p style="text-align: center; color: var(--text-color-dark);">Mostrando os primeiros 100 resultados...</p>' : ''}
@@ -200,312 +236,6 @@ function searchBible() {
     
     textContainer.style.display = 'block';
     textContainer.scrollIntoView({ behavior: 'smooth' });
-}
-
-// Buscar por referência específica (ex: "Salmo 41", "Mateus 12:3")
-function searchByReference(searchTerm, booksToSearch) {
-    // Padrões de busca por referência
-    const patterns = [
-        // Padrão: "Livro Capítulo:Versículo" (ex: "João 3:16", "Mateus 12:3")
-        /^([a-záêçõãàéíóúâôü\s\d]+)\s+(\d+):(\d+)$/i,
-        // Padrão: "Livro Capítulo versículo Número" (ex: "João 3 versículo 16")
-        /^([a-záêçõãàéíóúâôü\s\d]+)\s+(\d+)\s+vers[íi]culo\s+(\d+)$/i,
-        // Padrão: "Livro Capítulo" (ex: "Salmo 41", "Mateus 12")
-        /^([a-záêçõãàéíóúâôü\s\d]+)\s+(\d+)$/i
-    ];
-
-    for (let pattern of patterns) {
-        const match = searchTerm.match(pattern);
-        if (match) {
-            const bookName = match[1].trim();
-            const chapterNum = parseInt(match[2]);
-            const verseNum = match[3] ? parseInt(match[3]) : null;
-
-            // Encontrar o livro
-            const book = findBookByName(bookName, booksToSearch);
-            if (!book) continue;
-
-            // Verificar se o capítulo existe
-            if (chapterNum < 1 || chapterNum > book.chapters.length) continue;
-
-            const chapter = book.chapters[chapterNum - 1];
-
-            if (verseNum) {
-                // Busca por versículo específico
-                if (verseNum < 1 || verseNum > chapter.length) continue;
-                const verse = chapter[verseNum - 1];
-                return `
-                    <h3>Referência encontrada: ${book.name} ${chapterNum}:${verseNum}</h3>
-                    <div class="verse" onclick="goToChapter('${book.name}', ${chapterNum})">
-                        <div class="verse-reference" style="font-weight: bold; margin-bottom: 10px; cursor: pointer;">
-                            ${book.name} ${chapterNum}:${verseNum}
-                        </div>
-                        <div style="font-size: 1.1em; line-height: 1.6;">${verse}</div>
-                    </div>
-                `;
-            } else {
-                // Busca por capítulo inteiro
-                const verses = chapter.map((verse, index) => 
-                    `<div class="verse" style="margin-bottom: 15px;">
-                        <div class="verse-reference" style="font-weight: bold; margin-bottom: 5px;">
-                            ${book.name} ${chapterNum}:${index + 1}
-                        </div>
-                        <div style="line-height: 1.6;">${verse}</div>
-                    </div>`
-                ).join('');
-                
-                return `
-                    <h3>Capítulo encontrado: ${book.name} ${chapterNum}</h3>
-                    <div class="chapter-content">
-                        ${verses}
-                    </div>
-                `;
-            }
-        }
-    }
-    
-    return null;
-}
-
-// Encontrar livro por nome (com tolerância a variações e erros de digitação)
-function findBookByName(searchName, booksToSearch) {
-    const normalizedSearch = searchName.toLowerCase().trim();
-    
-    // Mapeamento de nomes alternativos e variações com erros comuns
-    const bookAliases = {
-        // Salmos - variações
-        'salmo': 'salmos',
-        'salmos': 'salmos',
-        'sl': 'salmos',
-        'psalm': 'salmos',
-        'psalms': 'salmos',
-        
-        // Mateus - variações e erros comuns
-        'mateus': 'mateus',
-        'matheus': 'mateus', // erro comum
-        'matheu': 'mateus',  // erro comum
-        'mathews': 'mateus', // erro comum
-        'mt': 'mateus',
-        'matthew': 'mateus',
-        
-        // Marcos - variações
-        'marcos': 'marcos',
-        'mc': 'marcos',
-        'mark': 'marcos',
-        
-        // Lucas - variações
-        'lucas': 'lucas',
-        'lc': 'lucas',
-        'luke': 'lucas',
-        
-        // João - variações e erros comuns
-        'joão': 'joão',
-        'joao': 'joão',     // sem acento
-        'john': 'joão',
-        'jo': 'joão',
-        
-        // Gênesis - variações e erros comuns
-        'genesis': 'gênesis',  // erro comum (com z)
-        'gênesis': 'gênesis',
-        'geneses': 'gênesis',  // erro comum
-        'genisis': 'gênesis',  // erro comum
-        'gn': 'gênesis',
-        
-        // Êxodo - variações e erros comuns
-        'exodo': 'êxodo',      // sem acento
-        'êxodo': 'êxodo',
-        'exodus': 'êxodo',
-        'ex': 'êxodo',
-        
-        // Samuel - variações
-        '1 samuel': '1 samuel',
-        '2 samuel': '2 samuel',
-        'primeiro samuel': '1 samuel',
-        'segundo samuel': '2 samuel',
-        '1samuel': '1 samuel',
-        '2samuel': '2 samuel',
-        
-        // Reis - variações
-        '1 reis': '1 reis',
-        '2 reis': '2 reis',
-        'primeiro reis': '1 reis',
-        'segundo reis': '2 reis',
-        '1reis': '1 reis',
-        '2reis': '2 reis',
-        
-        // Crônicas - variações e erros comuns
-        '1 cronicas': '1 crônicas',  // sem acento
-        '1 crônicas': '1 crônicas',
-        '2 cronicas': '2 crônicas',  // sem acento
-        '2 crônicas': '2 crônicas',
-        'primeiro cronicas': '1 crônicas',
-        'segundo cronicas': '2 crônicas',
-        '1cronicas': '1 crônicas',
-        '2cronicas': '2 crônicas',
-        
-        // Jó - variações
-        'jó': 'jó',
-        'jo': 'jó',
-        'job': 'jó',
-        
-        // Provérbios - variações e erros comuns
-        'proverbios': 'provérbios',  // sem acento
-        'provérbios': 'provérbios',
-        'proverbio': 'provérbios',   // singular
-        'pv': 'provérbios',
-        'proverbs': 'provérbios',
-        
-        // Eclesiastes - variações
-        'eclesiastes': 'eclesiastes',
-        'ec': 'eclesiastes',
-        'ecclesiastes': 'eclesiastes',
-        
-        // Isaías - variações e erros comuns
-        'isaias': 'isaías',    // sem acento
-        'isaías': 'isaías',
-        'isaia': 'isaías',     // erro comum
-        'is': 'isaías',
-        'isaiah': 'isaías',
-        
-        // Jeremias - variações
-        'jeremias': 'jeremias',
-        'jr': 'jeremias',
-        'jeremiah': 'jeremias',
-        
-        // Ezequiel - variações
-        'ezequiel': 'ezequiel',
-        'ez': 'ezequiel',
-        'ezekiel': 'ezequiel',
-        
-        // Daniel - variações
-        'daniel': 'daniel',
-        'dn': 'daniel',
-        
-        // Atos - variações
-        'atos': 'atos',
-        'at': 'atos',
-        'acts': 'atos',
-        
-        // Romanos - variações
-        'romanos': 'romanos',
-        'rm': 'romanos',
-        'romans': 'romanos',
-        
-        // Coríntios - variações e erros comuns
-        '1 corintios': '1 coríntios',  // sem acento
-        '1 coríntios': '1 coríntios',
-        '2 corintios': '2 coríntios',  // sem acento
-        '2 coríntios': '2 coríntios',
-        'primeiro corintios': '1 coríntios',
-        'segundo corintios': '2 coríntios',
-        '1corintios': '1 coríntios',
-        '2corintios': '2 coríntios',
-        '1 corinthians': '1 coríntios',
-        '2 corinthians': '2 coríntios',
-        
-        // Gálatas - variações e erros comuns
-        'galatas': 'gálatas',    // sem acento
-        'gálatas': 'gálatas',
-        'galata': 'gálatas',     // singular
-        'gl': 'gálatas',
-        'galatians': 'gálatas',
-        
-        // Efésios - variações e erros comuns
-        'efesios': 'efésios',    // sem acento
-        'efésios': 'efésios',
-        'efesio': 'efésios',     // singular
-        'ef': 'efésios',
-        'ephesians': 'efésios',
-        
-        // Filipenses - variações
-        'filipenses': 'filipenses',
-        'fp': 'filipenses',
-        'philippians': 'filipenses',
-        
-        // Colossenses - variações
-        'colossenses': 'colossenses',
-        'cl': 'colossenses',
-        'colossians': 'colossenses',
-        
-        // Tessalonicenses - variações
-        '1 tessalonicenses': '1 tessalonicenses',
-        '2 tessalonicenses': '2 tessalonicenses',
-        'primeiro tessalonicenses': '1 tessalonicenses',
-        'segundo tessalonicenses': '2 tessalonicenses',
-        '1tessalonicenses': '1 tessalonicenses',
-        '2tessalonicenses': '2 tessalonicenses',
-        '1 thessalonians': '1 tessalonicenses',
-        '2 thessalonians': '2 tessalonicenses',
-        
-        // Timóteo - variações e erros comuns
-        '1 timoteo': '1 timóteo',    // sem acento
-        '1 timóteo': '1 timóteo',
-        '2 timoteo': '2 timóteo',    // sem acento
-        '2 timóteo': '2 timóteo',
-        'primeiro timoteo': '1 timóteo',
-        'segundo timoteo': '2 timóteo',
-        '1timoteo': '1 timóteo',
-        '2timoteo': '2 timóteo',
-        '1 timothy': '1 timóteo',
-        '2 timothy': '2 timóteo',
-        
-        // Hebreus - variações
-        'hebreus': 'hebreus',
-        'hb': 'hebreus',
-        'hebrews': 'hebreus',
-        
-        // Tiago - variações
-        'tiago': 'tiago',
-        'tg': 'tiago',
-        'james': 'tiago',
-        
-        // Pedro - variações
-        '1 pedro': '1 pedro',
-        '2 pedro': '2 pedro',
-        'primeiro pedro': '1 pedro',
-        'segundo pedro': '2 pedro',
-        '1pedro': '1 pedro',
-        '2pedro': '2 pedro',
-        '1 peter': '1 pedro',
-        '2 peter': '2 pedro',
-        
-        // João (cartas) - variações
-        '1 joão': '1 joão',
-        '2 joão': '2 joão',
-        '3 joão': '3 joão',
-        '1 joao': '1 joão',      // sem acento
-        '2 joao': '2 joão',      // sem acento
-        '3 joao': '3 joão',      // sem acento
-        'primeiro joão': '1 joão',
-        'segundo joão': '2 joão',
-        'terceiro joão': '3 joão',
-        '1joão': '1 joão',
-        '2joão': '2 joão',
-        '3joão': '3 joão',
-        '1 john': '1 joão',
-        '2 john': '2 joão',
-        '3 john': '3 joão',
-        
-        // Apocalipse - variações
-        'apocalipse': 'apocalipse',
-        'ap': 'apocalipse',
-        'revelation': 'apocalipse',
-        'revelacao': 'apocalipse',   // sem acento
-        'revelação': 'apocalipse'
-    };
-    
-    // Verificar aliases primeiro
-    const aliasName = bookAliases[normalizedSearch];
-    if (aliasName) {
-        return booksToSearch.find(book => book.name.toLowerCase() === aliasName);
-    }
-    
-    // Busca direta por nome
-    return booksToSearch.find(book => 
-        book.name.toLowerCase() === normalizedSearch ||
-        book.name.toLowerCase().includes(normalizedSearch) ||
-        normalizedSearch.includes(book.name.toLowerCase())
-    );
 }
 
 // Destacar termo de busca
@@ -539,9 +269,8 @@ async function findVerse() {
     loadingIndicator.classList.remove('hidden');
     verseResult.classList.add('hidden');
 
-    // Usar a chave da API do Google do arquivo de configuração
-    const apiKey = API_CONFIG.GOOGLE_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const apiKey = 'AIzaSyAtYrhZu8uX-oFCcQXsl9jnzLs7yHIAObI';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const systemPrompt = `Você é um mecanismo de resposta bíblica. Quando alguém escrever um texto, pergunta, desabafo ou reflexão, sua tarefa é retornar apenas um ou dois versículos bíblicos curtos e diretamente relacionados ao conteúdo recebido.
 ⚠️ Responda apenas com os versículos, em português brasileiro. Não inclua explicações, interpretações, comentários, saudações ou qualquer outro tipo de texto. Nada além dos versículos.
@@ -559,25 +288,20 @@ João 3:16
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 500
-                }
+                "contents": [{
+                    "parts": [
+                        { "text": prompt }]
+                }]
             })
         });
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Erro da API:', errorText);
-            throw new Error(`Erro ao chamar a API do Google Gemini: ${response.status}`);
+            throw new Error(`Erro ao chamar a API do Gemini: ${response.status}`);
         }
 
         const data = await response.json();
@@ -694,7 +418,7 @@ function downloadImage() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.font = '18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Find Jesus - Aplicativo Cristão', canvas.width / 2, canvas.height - 80);
+        ctx.fillText('Find Jesus - by John Delmiro APP', canvas.width / 2, canvas.height - 80);
         
         // Baixar imagem
         canvas.toBlob(function(blob) {
