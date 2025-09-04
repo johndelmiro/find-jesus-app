@@ -252,6 +252,79 @@ function goToChapter(bookName, chapterNumber) {
     }
 }
 
+// Função para navegar para um versículo específico na Bíblia
+function goToVerseInBible(reference) {
+    if (!reference) return;
+    
+    // Extrair livro e capítulo da referência (ex: "João 3:16" -> livro: "João", capítulo: 3)
+    const match = reference.match(/^(.+?)\s+(\d+):(\d+)$/);
+    if (!match) return;
+    
+    const bookName = match[1].trim();
+    const chapterNumber = parseInt(match[2]);
+    const verseNumber = parseInt(match[3]);
+    
+    // Encontrar o livro na lista
+    const book = [...oldTestamentBooks, ...newTestamentBooks].find(b => 
+        b.name.toLowerCase() === bookName.toLowerCase() ||
+        b.name.toLowerCase().includes(bookName.toLowerCase()) ||
+        bookName.toLowerCase().includes(b.name.toLowerCase())
+    );
+    
+    if (book) {
+        // Navegar para a tela da Bíblia
+        showBible('complete');
+        
+        // Carregar o livro e capítulo
+        setTimeout(() => {
+            loadBook(book);
+            setTimeout(() => {
+                loadChapter(chapterNumber);
+                
+                // Destacar o versículo específico após carregar o capítulo
+                setTimeout(() => {
+                    highlightVerse(verseNumber);
+                }, 500);
+            }, 300);
+        }, 100);
+    } else {
+        alert('Livro não encontrado: ' + bookName);
+    }
+}
+
+// Função para destacar um versículo específico
+function highlightVerse(verseNumber) {
+    const chapterContent = document.getElementById('chapter-content');
+    if (!chapterContent) return;
+    
+    // Procurar pelo versículo
+    const verses = chapterContent.querySelectorAll('p');
+    verses.forEach(verse => {
+        const verseText = verse.textContent;
+        const verseMatch = verseText.match(/^(\d+)\s/);
+        if (verseMatch && parseInt(verseMatch[1]) === verseNumber) {
+            // Destacar o versículo
+            verse.style.backgroundColor = '#fff3cd';
+            verse.style.border = '2px solid #ffc107';
+            verse.style.borderRadius = '5px';
+            verse.style.padding = '10px';
+            verse.style.margin = '10px 0';
+            
+            // Rolar até o versículo
+            verse.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Remover o destaque após alguns segundos
+            setTimeout(() => {
+                verse.style.backgroundColor = '';
+                verse.style.border = '';
+                verse.style.borderRadius = '';
+                verse.style.padding = '';
+                verse.style.margin = '';
+            }, 5000);
+        }
+    });
+}
+
 // Find Jesus - Encontrar versículo
 async function findVerse() {
     const userSituation = document.getElementById('user-situation').value.trim();
@@ -327,8 +400,15 @@ João 3:16
             }
         }
 
-        verseTextElement.textContent = `"${text}"`;
-        verseReferenceElement.textContent = reference;
+        verseTextElement.textContent = `"${text}"`;        verseReferenceElement.textContent = reference;
+        
+        // Tornar a referência clicável
+        verseReferenceElement.style.cursor = 'pointer';
+        verseReferenceElement.style.textDecoration = 'underline';
+        verseReferenceElement.style.color = '#007bff';
+        verseReferenceElement.onclick = function() {
+            goToVerseInBible(reference);
+        };
 
         // Armazenar para compartilhamento
         window.currentVerse = { text, reference };
