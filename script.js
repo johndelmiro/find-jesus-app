@@ -130,14 +130,15 @@ function loadChapter(chapterNumber) {
     textContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Busca na Bíblia com IA para correção automática
+// Busca na Bíblia
 function searchBible() {
-    const searchTerm = document.getElementById('bible-search').value.trim();
+    const searchTerm = document.getElementById('bible-search').value.toLowerCase().trim();
     if (!searchTerm) return;
 
     const booksContainer = document.getElementById('bible-books');
     const chaptersContainer = document.getElementById('bible-chapters');
     const textContainer = document.getElementById('bible-text');
+    const results = [];
 
     booksContainer.style.display = 'none';
     chaptersContainer.style.display = 'none';
@@ -154,7 +155,7 @@ function searchBible() {
         booksToSearch = newTestamentBooks;
     }
 
-    // Primeiro tentar busca direta por referência
+    // Verificar se é uma busca por referência específica (ex: "Salmo 41", "Mateus 12:3")
     const referenceResult = searchByReference(searchTerm, booksToSearch);
     if (referenceResult) {
         textContainer.innerHTML = referenceResult;
@@ -163,91 +164,10 @@ function searchBible() {
         return;
     }
 
-    // Se não encontrou referência direta, usar IA para interpretar e corrigir
-    searchWithAI(searchTerm, textContainer, booksToSearch);
-
-}
-
-// Busca com IA para interpretar e corrigir termos
-async function searchWithAI(searchTerm, textContainer, booksToSearch) {
-    try {
-        textContainer.innerHTML = '<p>Interpretando busca com IA...</p>';
-        textContainer.style.display = 'block';
-        
-        // Prompt para a IA interpretar o termo de busca
-        const prompt = `Você é um assistente especializado em busca bíblica. Analise o termo de busca "${searchTerm}" e:
-
-1. Se for uma referência bíblica (livro + capítulo/versículo), corrija qualquer erro de digitação e retorne no formato exato: "LIVRO CAPÍTULO:VERSÍCULO" ou "LIVRO CAPÍTULO" (use os nomes corretos dos livros em português)
-2. Se for uma palavra ou frase para buscar no texto, retorne exatamente: "BUSCA: palavra ou frase"
-
-Exemplos:
-- "Genesis 1:1" → "Gênesis 1:1"
-- "Matheus 5" → "Mateus 5"
-- "Joao 3:16" → "João 3:16"
-- "amor de deus" → "BUSCA: amor de deus"
-- "salmo 23" → "Salmos 23"
-
-Responda APENAS com o formato correto, sem explicações.`;
-
-        const apiKey = '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';
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'HTTP-Referer': window.location.origin,
-                'X-Title': 'Find Jesus App',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'deepseek/deepseek-chat-v3.1:free',
-                messages: [
-                    { role: 'system', content: 'Você é um assistente especializado em busca bíblica que corrige erros de digitação e interpreta termos de busca.' },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.1,
-                max_tokens: 100
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Erro na API');
-        }
-
-        const data = await response.json();
-        const correctedTerm = data.choices[0].message.content.trim();
-        
-        // Processar resposta da IA
-        if (correctedTerm.startsWith('BUSCA:')) {
-            // É uma busca por palavra/frase
-            const searchPhrase = correctedTerm.replace('BUSCA:', '').trim();
-            performTextSearch(searchPhrase, textContainer, booksToSearch);
-        } else {
-            // É uma referência bíblica corrigida
-            const referenceResult = searchByReference(correctedTerm, booksToSearch);
-            if (referenceResult) {
-                textContainer.innerHTML = referenceResult;
-            } else {
-                // Se ainda não encontrou, fazer busca por texto
-                performTextSearch(searchTerm, textContainer, booksToSearch);
-            }
-        }
-        
-    } catch (error) {
-        console.error('Erro na busca com IA:', error);
-        // Fallback para busca tradicional
-        performTextSearch(searchTerm, textContainer, booksToSearch);
-    }
-}
-
-// Função para busca por texto tradicional
-function performTextSearch(searchTerm, textContainer, booksToSearch) {
-    const results = [];
-    const searchLower = searchTerm.toLowerCase();
-    
     booksToSearch.forEach(book => {
         book.chapters.forEach((chapter, chapterIndex) => {
             chapter.forEach((verse, verseIndex) => {
-                if (verse.toLowerCase().includes(searchLower)) {
+                if (verse.toLowerCase().includes(searchTerm)) {
                     results.push({
                         book: book.name,
                         chapter: chapterIndex + 1,
@@ -780,7 +700,7 @@ function downloadImage() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.font = '18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Find Jesus - by John Delmiro APP', canvas.width / 2, canvas.height - 80);
+        ctx.fillText('Find Jesus - Aplicativo Cristão', canvas.width / 2, canvas.height - 80);
         
         // Baixar imagem
         canvas.toBlob(function(blob) {
