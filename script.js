@@ -267,88 +267,231 @@ function searchByReference(searchTerm, booksToSearch) {
     return null;
 }
 
-// Encontrar livro por nome (com tolerância a variações)
+// Encontrar livro por nome (com tolerância a variações e erros de digitação)
 function findBookByName(searchName, booksToSearch) {
     const normalizedSearch = searchName.toLowerCase().trim();
     
-    // Mapeamento de nomes alternativos
+    // Mapeamento de nomes alternativos e variações com erros comuns
     const bookAliases = {
+        // Salmos - variações
         'salmo': 'salmos',
         'salmos': 'salmos',
         'sl': 'salmos',
+        'psalm': 'salmos',
+        'psalms': 'salmos',
+        
+        // Mateus - variações e erros comuns
         'mateus': 'mateus',
+        'matheus': 'mateus', // erro comum
+        'matheu': 'mateus',  // erro comum
+        'mathews': 'mateus', // erro comum
         'mt': 'mateus',
+        'matthew': 'mateus',
+        
+        // Marcos - variações
         'marcos': 'marcos',
         'mc': 'marcos',
+        'mark': 'marcos',
+        
+        // Lucas - variações
         'lucas': 'lucas',
         'lc': 'lucas',
+        'luke': 'lucas',
+        
+        // João - variações e erros comuns
         'joão': 'joão',
+        'joao': 'joão',     // sem acento
+        'john': 'joão',
         'jo': 'joão',
-        'genesis': 'gênesis',
+        
+        // Gênesis - variações e erros comuns
+        'genesis': 'gênesis',  // erro comum (com z)
         'gênesis': 'gênesis',
+        'geneses': 'gênesis',  // erro comum
+        'genisis': 'gênesis',  // erro comum
         'gn': 'gênesis',
-        'exodo': 'êxodo',
+        
+        // Êxodo - variações e erros comuns
+        'exodo': 'êxodo',      // sem acento
         'êxodo': 'êxodo',
+        'exodus': 'êxodo',
         'ex': 'êxodo',
+        
+        // Samuel - variações
         '1 samuel': '1 samuel',
         '2 samuel': '2 samuel',
+        'primeiro samuel': '1 samuel',
+        'segundo samuel': '2 samuel',
+        '1samuel': '1 samuel',
+        '2samuel': '2 samuel',
+        
+        // Reis - variações
         '1 reis': '1 reis',
         '2 reis': '2 reis',
-        '1 cronicas': '1 crônicas',
+        'primeiro reis': '1 reis',
+        'segundo reis': '2 reis',
+        '1reis': '1 reis',
+        '2reis': '2 reis',
+        
+        // Crônicas - variações e erros comuns
+        '1 cronicas': '1 crônicas',  // sem acento
         '1 crônicas': '1 crônicas',
-        '2 cronicas': '2 crônicas',
+        '2 cronicas': '2 crônicas',  // sem acento
         '2 crônicas': '2 crônicas',
+        'primeiro cronicas': '1 crônicas',
+        'segundo cronicas': '2 crônicas',
+        '1cronicas': '1 crônicas',
+        '2cronicas': '2 crônicas',
+        
+        // Jó - variações
         'jó': 'jó',
         'jo': 'jó',
-        'proverbios': 'provérbios',
+        'job': 'jó',
+        
+        // Provérbios - variações e erros comuns
+        'proverbios': 'provérbios',  // sem acento
         'provérbios': 'provérbios',
+        'proverbio': 'provérbios',   // singular
         'pv': 'provérbios',
+        'proverbs': 'provérbios',
+        
+        // Eclesiastes - variações
         'eclesiastes': 'eclesiastes',
         'ec': 'eclesiastes',
-        'isaias': 'isaías',
+        'ecclesiastes': 'eclesiastes',
+        
+        // Isaías - variações e erros comuns
+        'isaias': 'isaías',    // sem acento
         'isaías': 'isaías',
+        'isaia': 'isaías',     // erro comum
         'is': 'isaías',
+        'isaiah': 'isaías',
+        
+        // Jeremias - variações
         'jeremias': 'jeremias',
         'jr': 'jeremias',
+        'jeremiah': 'jeremias',
+        
+        // Ezequiel - variações
         'ezequiel': 'ezequiel',
         'ez': 'ezequiel',
+        'ezekiel': 'ezequiel',
+        
+        // Daniel - variações
         'daniel': 'daniel',
         'dn': 'daniel',
+        
+        // Atos - variações
         'atos': 'atos',
         'at': 'atos',
+        'acts': 'atos',
+        
+        // Romanos - variações
         'romanos': 'romanos',
         'rm': 'romanos',
-        '1 corintios': '1 coríntios',
+        'romans': 'romanos',
+        
+        // Coríntios - variações e erros comuns
+        '1 corintios': '1 coríntios',  // sem acento
         '1 coríntios': '1 coríntios',
-        '2 corintios': '2 coríntios',
+        '2 corintios': '2 coríntios',  // sem acento
         '2 coríntios': '2 coríntios',
-        'galatas': 'gálatas',
+        'primeiro corintios': '1 coríntios',
+        'segundo corintios': '2 coríntios',
+        '1corintios': '1 coríntios',
+        '2corintios': '2 coríntios',
+        '1 corinthians': '1 coríntios',
+        '2 corinthians': '2 coríntios',
+        
+        // Gálatas - variações e erros comuns
+        'galatas': 'gálatas',    // sem acento
         'gálatas': 'gálatas',
+        'galata': 'gálatas',     // singular
         'gl': 'gálatas',
-        'efesios': 'efésios',
+        'galatians': 'gálatas',
+        
+        // Efésios - variações e erros comuns
+        'efesios': 'efésios',    // sem acento
         'efésios': 'efésios',
+        'efesio': 'efésios',     // singular
         'ef': 'efésios',
+        'ephesians': 'efésios',
+        
+        // Filipenses - variações
         'filipenses': 'filipenses',
         'fp': 'filipenses',
+        'philippians': 'filipenses',
+        
+        // Colossenses - variações
         'colossenses': 'colossenses',
         'cl': 'colossenses',
+        'colossians': 'colossenses',
+        
+        // Tessalonicenses - variações
         '1 tessalonicenses': '1 tessalonicenses',
         '2 tessalonicenses': '2 tessalonicenses',
-        '1 timoteo': '1 timóteo',
+        'primeiro tessalonicenses': '1 tessalonicenses',
+        'segundo tessalonicenses': '2 tessalonicenses',
+        '1tessalonicenses': '1 tessalonicenses',
+        '2tessalonicenses': '2 tessalonicenses',
+        '1 thessalonians': '1 tessalonicenses',
+        '2 thessalonians': '2 tessalonicenses',
+        
+        // Timóteo - variações e erros comuns
+        '1 timoteo': '1 timóteo',    // sem acento
         '1 timóteo': '1 timóteo',
-        '2 timoteo': '2 timóteo',
+        '2 timoteo': '2 timóteo',    // sem acento
         '2 timóteo': '2 timóteo',
+        'primeiro timoteo': '1 timóteo',
+        'segundo timoteo': '2 timóteo',
+        '1timoteo': '1 timóteo',
+        '2timoteo': '2 timóteo',
+        '1 timothy': '1 timóteo',
+        '2 timothy': '2 timóteo',
+        
+        // Hebreus - variações
         'hebreus': 'hebreus',
         'hb': 'hebreus',
+        'hebrews': 'hebreus',
+        
+        // Tiago - variações
         'tiago': 'tiago',
         'tg': 'tiago',
+        'james': 'tiago',
+        
+        // Pedro - variações
         '1 pedro': '1 pedro',
         '2 pedro': '2 pedro',
+        'primeiro pedro': '1 pedro',
+        'segundo pedro': '2 pedro',
+        '1pedro': '1 pedro',
+        '2pedro': '2 pedro',
+        '1 peter': '1 pedro',
+        '2 peter': '2 pedro',
+        
+        // João (cartas) - variações
         '1 joão': '1 joão',
         '2 joão': '2 joão',
         '3 joão': '3 joão',
+        '1 joao': '1 joão',      // sem acento
+        '2 joao': '2 joão',      // sem acento
+        '3 joao': '3 joão',      // sem acento
+        'primeiro joão': '1 joão',
+        'segundo joão': '2 joão',
+        'terceiro joão': '3 joão',
+        '1joão': '1 joão',
+        '2joão': '2 joão',
+        '3joão': '3 joão',
+        '1 john': '1 joão',
+        '2 john': '2 joão',
+        '3 john': '3 joão',
+        
+        // Apocalipse - variações
         'apocalipse': 'apocalipse',
-        'ap': 'apocalipse'
+        'ap': 'apocalipse',
+        'revelation': 'apocalipse',
+        'revelacao': 'apocalipse',   // sem acento
+        'revelação': 'apocalipse'
     };
     
     // Verificar aliases primeiro
