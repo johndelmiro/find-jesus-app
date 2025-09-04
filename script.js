@@ -575,7 +575,7 @@ João 3:16
                     }
                 ],
                 "temperature": 0.7,
-                "max_tokens": 500
+                "max_completion_tokens": 500
             })
         });
 
