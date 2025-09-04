@@ -539,8 +539,9 @@ async function findVerse() {
     loadingIndicator.classList.remove('hidden');
     verseResult.classList.add('hidden');
 
-    const apiKey = 'AIzaSyDhkVQFnytBdVYjZjbJQXzKzOQJvQXzKzO';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // Usar a chave da API do arquivo de configuração
+    const apiKey = API_CONFIG.OPENAI_API_KEY;
+    const url = 'https://api.openai.com/v1/chat/completions';
 
     const systemPrompt = `Você é um mecanismo de resposta bíblica. Quando alguém escrever um texto, pergunta, desabafo ou reflexão, sua tarefa é retornar apenas um ou dois versículos bíblicos curtos e diretamente relacionados ao conteúdo recebido.
 ⚠️ Responda apenas com os versículos, em português brasileiro. Não inclua explicações, interpretações, comentários, saudações ou qualquer outro tipo de texto. Nada além dos versículos.
@@ -558,29 +559,34 @@ João 3:16
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 500
-                }
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": systemPrompt
+                    },
+                    {
+                        "role": "user",
+                        "content": userSituation
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500
             })
         });
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Erro da API:', errorText);
-            throw new Error(`Erro ao chamar a API do Google Gemini: ${response.status}`);
+            throw new Error(`Erro ao chamar a API da OpenAI: ${response.status}`);
         }
 
         const data = await response.json();
-        const fullVerse = data.candidates[0].content.parts[0].text.trim();
+        const fullVerse = data.choices[0].message.content.trim();
 
         // Extrair referência e texto do versículo (novo formato)
         const lines = fullVerse.split('\n').filter(line => line.trim() !== '');
