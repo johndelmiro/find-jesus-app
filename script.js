@@ -418,7 +418,7 @@ function downloadImage() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.font = '18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Find Jesus - by John Delmiro APP', canvas.width / 2, canvas.height - 80);
+        ctx.fillText('Find Jesus - Aplicativo Cristão', canvas.width / 2, canvas.height - 80);
         
         // Baixar imagem
         canvas.toBlob(function(blob) {
