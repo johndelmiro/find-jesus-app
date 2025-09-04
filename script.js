@@ -539,8 +539,8 @@ async function findVerse() {
     loadingIndicator.classList.remove('hidden');
     verseResult.classList.add('hidden');
 
-    const apiKey = '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';
-    const url = 'https://openrouter.ai/api/v1/chat/completions';
+    const apiKey = 'AIzaSyDhkVQFnytBdVYjZjbJQXzKzOQJvQXzKzO';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const systemPrompt = `Você é um mecanismo de resposta bíblica. Quando alguém escrever um texto, pergunta, desabafo ou reflexão, sua tarefa é retornar apenas um ou dois versículos bíblicos curtos e diretamente relacionados ao conteúdo recebido.
 ⚠️ Responda apenas com os versículos, em português brasileiro. Não inclua explicações, interpretações, comentários, saudações ou qualquer outro tipo de texto. Nada além dos versículos.
@@ -558,36 +558,29 @@ João 3:16
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'HTTP-Referer': window.location.origin,
-                'X-Title': 'Find Jesus App'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                "model": "deepseek/deepseek-chat-v3.1:free",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": systemPrompt
-                    },
-                    {
-                        "role": "user",
-                        "content": userSituation
-                    }
-                ],
-                "temperature": 0.7,
-                "max_tokens": 500
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 500
+                }
             })
         });
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Erro da API:', errorText);
-            throw new Error(`Erro ao chamar a API do DeepSeek: ${response.status}`);
+            throw new Error(`Erro ao chamar a API do Google Gemini: ${response.status}`);
         }
 
         const data = await response.json();
-        const fullVerse = data.choices[0].message.content.trim();
+        const fullVerse = data.candidates[0].content.parts[0].text.trim();
 
         // Extrair referência e texto do versículo (novo formato)
         const lines = fullVerse.split('\n').filter(line => line.trim() !== '');
